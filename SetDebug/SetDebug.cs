@@ -37,6 +37,8 @@ namespace SetDebug {
         /// <param name="package">Owner package, not null.</param>
         private SetDebug(Package package, EnvDTE.DTE _dte) {
             dte = _dte;
+            var ev = dte.Events.BuildEvents;
+            ev.OnBuildDone += Ev_OnBuildDone;
             if (package == null) {
                 throw new ArgumentNullException("package");
             }
@@ -86,7 +88,6 @@ namespace SetDebug {
         /// <param name="e">Event args.</param>
         private void MenuItemCallback(object sender, EventArgs e) {
             string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.GetType().FullName);
-            string title = "SetDebug";
             var cnt = dte.Solution.SolutionBuild.SolutionConfigurations.Count;
             for (int i=1;i<=cnt;i++) {
                 var it = dte.Solution.SolutionBuild.SolutionConfigurations.Item(i);
@@ -102,6 +103,10 @@ namespace SetDebug {
             //    OLEMSGICON.OLEMSGICON_INFO,
             //    OLEMSGBUTTON.OLEMSGBUTTON_OK,
             //    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        }
+
+        private void Ev_OnBuildDone(EnvDTE.vsBuildScope Scope, EnvDTE.vsBuildAction Action) {
+            MenuItemCallback(null, null);
         }
     }
 }
