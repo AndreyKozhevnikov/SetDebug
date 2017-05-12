@@ -87,6 +87,12 @@ namespace SetDebug {
         private void MenuItemCallback(object sender, EventArgs e) {
             string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.GetType().FullName);
             string title = "SetDebug";
+            var cnt = dte.Solution.SolutionBuild.SolutionConfigurations.Count;
+            for (int i=1;i<=cnt;i++) {
+                var it = dte.Solution.SolutionBuild.SolutionConfigurations.Item(i);
+                if (it.Name == "Debug")
+                    it.Activate();
+            }
             dte.Solution.SolutionBuild.SolutionConfigurations.Item(1).Activate();
             // Show a message box to prove we were here
             //VsShellUtilities.ShowMessageBox(
