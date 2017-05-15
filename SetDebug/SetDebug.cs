@@ -9,6 +9,7 @@ using System.ComponentModel.Design;
 using System.Globalization;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using System.Timers;
 
 namespace SetDebug {
     /// <summary>
@@ -76,7 +77,7 @@ namespace SetDebug {
         /// <param name="package">Owner package, not null.</param>
         public static void Initialize(Package package, EnvDTE.DTE _dte) {
             Instance = new SetDebug(package, _dte);
-           
+
         }
         EnvDTE.DTE dte;
         /// <summary>
@@ -87,14 +88,17 @@ namespace SetDebug {
         /// <param name="sender">Event sender.</param>
         /// <param name="e">Event args.</param>
         private void MenuItemCallback(object sender, EventArgs e) {
-            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.GetType().FullName);
-            var cnt = dte.Solution.SolutionBuild.SolutionConfigurations.Count;
-            for (int i=1;i<=cnt;i++) {
-                var it = dte.Solution.SolutionBuild.SolutionConfigurations.Item(i);
-                if (it.Name == "Debug")
-                    it.Activate();
+            var curr = dte.Solution.SolutionBuild.ActiveConfiguration.Name;
+            if (curr == "Release") {
+                var cnt = dte.Solution.SolutionBuild.SolutionConfigurations.Count;
+                for (int i = 1; i <= cnt; i++) {
+                    var it = dte.Solution.SolutionBuild.SolutionConfigurations.Item(i);
+                    if (it.Name == "Debug") {
+                        it.Activate();
+                        return;
+                    }
+                }
             }
-            dte.Solution.SolutionBuild.SolutionConfigurations.Item(1).Activate();
             // Show a message box to prove we were here
             //VsShellUtilities.ShowMessageBox(
             //    this.ServiceProvider,
@@ -104,9 +108,20 @@ namespace SetDebug {
             //    OLEMSGBUTTON.OLEMSGBUTTON_OK,
             //    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
         }
-
+        Timer timer;
         private void Ev_OnBuildDone(EnvDTE.vsBuildScope Scope, EnvDTE.vsBuildAction Action) {
-            MenuItemCallback(null, null);
+            timer = new Timer(500);
+            timer.Elapsed += Timer_Elapsed;
+            timer.Start();
+
+        }
+
+        private void Timer_Elapsed(object sender, ElapsedEventArgs e) {
+            timer.Stop();
+            var curMode = this.dte.Solution.DTE.Debugger.CurrentMode;
+            if (curMode == EnvDTE.dbgDebugMode.dbgDesignMode) {
+                MenuItemCallback(null, null);
+            }
         }
     }
 }
